@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Medzo · Live demo</title>
+<meta name="description" content="Medzo demo: a domain-restricted AWS chatbot for the AWS Club that refuses non-AWS questions.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23FF8A1C'/%3E%3Ctext x='16' y='22' font-family='Arial' font-weight='900' font-size='13' fill='white' text-anchor='middle'%3EMZ%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&family=Hanken+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+:root{--bg:#0F1620;--panel:#16202D;--card:#1E2A3A;--ink:#EEF3F8;--muted:#9AA9BB;--line:rgba(255,255,255,.1);--acc:#FF8A1C;--ok:#3CC97A;--bad:#FF6B6B;
+  --f-head:"Montserrat",system-ui,sans-serif;--f-body:"Hanken Grotesk","Segoe UI",system-ui,sans-serif;--f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 var(--f-body);display:flex;flex-direction:column}
+a{color:inherit}
+.demo-bar{background:#000;color:#fff;font:600 12px var(--f-mono);letter-spacing:.05em;padding:8px max(16px,4vw);display:flex;gap:12px;justify-content:space-between;flex-wrap:wrap}
+.demo-bar a{opacity:.8}
+.app{flex:1;display:grid;grid-template-columns:300px minmax(0,1fr);max-width:1180px;width:100%;margin:0 auto;min-height:0}
+@media (max-width:820px){.app{grid-template-columns:1fr}.side{display:none}}
+.side{border-right:1px solid var(--line);padding:24px 20px;display:grid;gap:18px;align-content:start;overflow:auto}
+h1{font:900 34px/1 var(--f-head);margin:0;letter-spacing:-.02em}
+h1 span{color:var(--acc)}
+.lbl{font:600 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.side p{margin:6px 0 0;color:var(--muted);font-size:14px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat{background:var(--card);border-radius:12px;padding:10px}
+.stat b{display:block;font:900 22px var(--f-head);font-variant-numeric:tabular-nums}
+.filter{background:var(--card);border-radius:12px;padding:12px;font:13px/1.6 var(--f-mono);color:var(--muted)}
+.filter b{color:var(--acc)}
+.chat{display:flex;flex-direction:column;min-height:0;height:calc(100vh - 36px)}
+.mhd{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line)}
+.av{width:38px;height:38px;border-radius:12px;background:var(--acc);display:grid;place-items:center;font:900 15px var(--f-head);color:#1A1004}
+.mhd b{display:block;font:800 16px var(--f-head)}
+.mhd small{color:var(--ok);font:600 12px var(--f-mono)}
+.log{flex:1;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:12px}
+.bub{padding:11px 14px;border-radius:16px;max-width:min(620px,88%);font-size:15px}
+.bub.u{background:var(--acc);color:#1A1004;align-self:flex-end;border-bottom-right-radius:4px;font-weight:600}
+.bub.a{background:var(--card);border-bottom-left-radius:4px}
+.bub.no{border:1.5px solid var(--bad)}
+.bub code{font:13px var(--f-mono);background:rgba(255,255,255,.08);padding:1px 5px;border-radius:5px}
+.bub .src{display:block;margin-top:6px;font:600 11px var(--f-mono);color:var(--muted)}
+.dots span{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--muted);margin-right:4px;animation:d 1s infinite}
+.dots span:nth-child(2){animation-delay:.15s}.dots span:nth-child(3){animation-delay:.3s}
+@keyframes d{50%{transform:translateY(-4px)}}
+.sugg{display:flex;gap:8px;padding:0 20px 10px;overflow-x:auto}
+.chip{flex:none;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:99px;padding:7px 12px;font:600 13px var(--f-body);cursor:pointer}
+.chip.x{border-color:color-mix(in srgb,var(--bad) 50%,transparent)}
+form{display:flex;gap:10px;padding:14px 20px 18px;border-top:1px solid var(--line)}
+form input{flex:1;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;color:var(--ink);font:15px var(--f-body)}
+form button{border:0;background:var(--acc);color:#1A1004;font:800 15px var(--f-body);border-radius:14px;padding:0 20px;cursor:pointer}
+@media (prefers-reduced-motion:reduce){.dots span{animation:none}}
+</style>
+</head>
+<body>
+<div class="demo-bar"><span>DEMO · BUILT-IN AWS KNOWLEDGE BASE · NO LLM CALLS</span><span><a href="https://github.com/irfansirkar/medzo">Code ↗</a> · <a href="https://irfansirkar.github.io/PERSONAL-PORFOLIO-WEBSITE/">Irfan's portfolio ↗</a></span></div>
+<div class="app">
+  <aside class="side">
+    <div><h1>Med<span>zo</span></h1><p>An AWS-only assistant for the AWS Club, built by Mohammad Irfan Sirkar at the Malla Reddy Hackathon 2024. It answers AWS questions and politely turns away everything else.</p></div>
+    <div class="stats">
+      <div class="stat"><span class="lbl">Answered</span><b id="sA">0</b></div>
+      <div class="stat"><span class="lbl">Blocked</span><b id="sB">0</b></div>
+    </div>
+    <div><div class="lbl" style="margin-bottom:6px">Domain filter · last check</div><div class="filter" id="flt">Waiting for a question…</div></div>
+    <div><div class="lbl">In the real app</div><p>Python + Boto3 + an LLM. A filter checks every question first, so the model only ever sees AWS questions. This demo uses a built-in knowledge base instead of an LLM, so no API key is exposed.</p></div>
+  </aside>
+  <section class="chat">
+    <div class="mhd"><div class="av">MZ</div><div><b>Medzo · AWS Club</b><small>● online</small></div></div>
+    <div class="log" id="log" aria-live="polite"></div>
+    <div class="sugg" id="sugg"></div>
+    <form id="f"><input id="in" placeholder="Ask an AWS question…" aria-label="Your question" autocomplete="off"><button>Send</button></form>
+  </section>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+/* knowledge base: [keywords, answer, docs path] */
+const KB=[
+ [['s3','private','public access','block public'],'Turn on <b>Block Public Access</b> for the bucket (all four settings), then remove any bucket policy or ACL that grants <code>"Principal": "*"</code>.','s3/latest/userguide/access-control-block-public-access.html'],
+ [['s3','what is s3','object storage','bucket'],'<b>Amazon S3</b> is object storage. You put files (objects) into buckets and get them back by key. It is built for 99.999999999% (11 nines) durability.','s3/'],
+ [['s3','storage class','glacier','infrequent'],'S3 storage classes trade price for access speed: <b>Standard</b> for hot data, <b>Standard-IA</b> for monthly access, and <b>Glacier</b> tiers for archives. <b>Intelligent-Tiering</b> moves objects for you.','s3/latest/userguide/storage-class-intro.html'],
+ [['s3','static website','host website'],'Upload your site to a bucket, then serve it through <b>CloudFront</b> with Origin Access Control. That gives you HTTPS without making the bucket public.','AmazonS3/latest/userguide/WebsiteHosting.html'],
+ [['lambda','serverless','what is lambda'],'<b>AWS Lambda</b> runs your code without servers. You upload a function, and it runs on events like an API call, an S3 upload or a schedule. You pay per request and per millisecond.','lambda/'],
+ [['lambda','timeout','max time','15 minutes'],'A Lambda function can run for at most <b>15 minutes</b> per call. For longer jobs, use Step Functions, ECS/Fargate or AWS Batch.','lambda/latest/dg/configuration-timeout.html'],
+ [['lambda','cold start'],'A cold start is the delay when Lambda creates a new environment. Reduce it with smaller packages, <b>SnapStart</b> (Java, Python, .NET) or <b>provisioned concurrency</b>.','lambda/latest/dg/provisioned-concurrency.html'],
+ [['ec2','what is ec2','virtual machine','instance'],'<b>Amazon EC2</b> gives you virtual servers (instances). You choose the CPU, memory, storage and OS, and pay per second while it runs.','ec2/'],
+ [['ec2','instance type','t3','m5','c5'],'Instance families: <b>T</b> = burstable and cheap, <b>M</b> = general purpose, <b>C</b> = compute-heavy, <b>R</b> = memory-heavy, <b>G/P</b> = GPUs.','ec2/instance-types/'],
+ [['ec2','spot','cheap','save money'],'<b>Spot Instances</b> use spare capacity at up to 90% off, but AWS can take them back with 2 minutes\' notice. Use them for batch jobs and ML training that can be restarted.','ec2/spot/'],
+ [['ec2','ssh','connect','key pair'],'Connect with <code>ssh -i key.pem ec2-user@&lt;public-ip&gt;</code>, or use <b>EC2 Instance Connect</b> or <b>Session Manager</b> so you don\'t need to open port 22.','AWSEC2/latest/UserGuide/connect.html'],
+ [['iam','what is iam','user','role','permission'],'<b>IAM</b> controls who can do what in your account. Users and roles get <b>policies</b> that allow or deny actions on resources.','iam/'],
+ [['iam','role vs user','difference role'],'A <b>user</b> has long-term credentials for a person. A <b>role</b> gives temporary credentials to whoever assumes it, such as an EC2 instance or a Lambda function. Prefer roles for apps.','IAM/latest/UserGuide/id_roles.html'],
+ [['iam','least privilege','best practice','root'],'Lock away the <b>root user</b> with MFA, give people and apps only the permissions they need, and use IAM Identity Center for logins.','IAM/latest/UserGuide/best-practices.html'],
+ [['vpc','what is vpc','network','subnet'],'A <b>VPC</b> is your private network in AWS. You split it into <b>subnets</b>: public ones route to an Internet Gateway, private ones don\'t.','vpc/'],
+ [['vpc','nat','private subnet internet'],'Instances in a private subnet reach the internet through a <b>NAT Gateway</b> placed in a public subnet. Nothing from outside can start a connection to them.','vpc/latest/userguide/vpc-nat-gateway.html'],
+ [['security group','nacl','firewall'],'<b>Security groups</b> are stateful firewalls on each instance and only allow traffic. <b>Network ACLs</b> are stateless, work at the subnet level and can deny traffic.','vpc/latest/userguide/vpc-security-groups.html'],
+ [['rds','database','mysql','postgres'],'<b>Amazon RDS</b> runs managed MySQL, PostgreSQL, MariaDB, Oracle and SQL Server. It handles backups, patching and Multi-AZ failover for you.','rds/'],
+ [['dynamodb','nosql','key value'],'<b>DynamoDB</b> is a serverless NoSQL key-value database with single-digit-millisecond reads at any scale. Design your keys around how you will query.','dynamodb/'],
+ [['aurora'],'<b>Amazon Aurora</b> is AWS\'s MySQL- and PostgreSQL-compatible database with storage that grows automatically and up to 15 read replicas.','aurora/'],
+ [['cloudfront','cdn'],'<b>CloudFront</b> is AWS\'s CDN. It caches your content at edge locations close to users, which cuts load times.','cloudfront/'],
+ [['route 53','route53','dns','domain'],'<b>Route 53</b> is AWS\'s DNS service. It registers domains and routes traffic with simple, weighted, latency-based or failover routing.','route53/'],
+ [['cloudwatch','logs','monitor','alarm','metric'],'<b>CloudWatch</b> collects metrics and logs. Set <b>alarms</b> to notify you or scale out when a metric crosses a threshold.','cloudwatch/'],
+ [['sagemaker','machine learning','train model','ml'],'<b>SageMaker</b> lets you build, train and deploy ML models. It has managed notebooks, training jobs on GPUs and one-click endpoints.','sagemaker/'],
+ [['bedrock','llm','generative','foundation model','claude'],'<b>Amazon Bedrock</b> gives API access to foundation models such as Anthropic Claude, Llama and Amazon Titan, without managing servers.','bedrock/'],
+ [['sqs','queue'],'<b>SQS</b> is a message queue that decouples services. <b>Standard</b> queues are at-least-once, and <b>FIFO</b> queues keep strict order.','sqs/'],
+ [['sns','notification','pub sub'],'<b>SNS</b> is publish/subscribe messaging. One message fans out to many subscribers: email, SMS, SQS or Lambda.','sns/'],
+ [['ecs','eks','fargate','container','docker','kubernetes'],'Run containers on <b>ECS</b> (AWS\'s own orchestrator) or <b>EKS</b> (Kubernetes). With <b>Fargate</b> you skip managing servers for either.','containers/'],
+ [['cloudformation','cdk','terraform','infrastructure as code','iac'],'<b>CloudFormation</b> builds AWS resources from templates. The <b>CDK</b> lets you write those templates in TypeScript or Python.','cloudformation/'],
+ [['free tier','cost','billing','budget','price'],'New accounts get the <b>Free Tier</b>. Set an <b>AWS Budget</b> alert on day one so you are emailed before costs grow.','billing/'],
+ [['region','availability zone','az'],'A <b>Region</b> is a geographic area such as ap-south-2 (Hyderabad). Each has several isolated <b>Availability Zones</b>. Spread across AZs for high availability.','global-infrastructure/'],
+ [['boto3','python sdk','sdk'],'<b>Boto3</b> is the AWS SDK for Python: <code>s3 = boto3.client("s3"); s3.list_buckets()</code>. Credentials come from your profile or an IAM role.','boto3/'],
+ [['aws club','who are you','what can you do','hello','hi'],'Hi! I\'m <b>Medzo</b>, the AWS Club assistant. Ask me about S3, EC2, Lambda, IAM, VPC, databases, ML on AWS and more.',null]
+];
+const AWS_TERMS=['aws','amazon','s3','ec2','lambda','iam','vpc','rds','dynamodb','aurora','cloudfront','route 53','route53','cloudwatch','sagemaker','bedrock','sqs','sns','ecs','eks','fargate','cloudformation','cdk','boto3','bucket','instance','serverless','subnet','security group','region','availability zone','free tier','glacier','nat','cloud','spot','ami','elastic','kinesis','athena','redshift','glue','cognito','api gateway','amplify','beanstalk','iac','iam role','club','hello','hi','who are you','what can you do'];
+const log=$('log');let A=0,Bk=0;
+function add(cls,html){const d=document.createElement('div');d.className='bub '+cls;d.innerHTML=html;log.appendChild(d);log.scrollTop=log.scrollHeight;return d}
+function ask(q){
+  add('u',q.replace(/</g,'&lt;'));
+  const t=' '+q.toLowerCase().replace(/[^a-z0-9 ]/g,' ')+' ';
+  const hits=AWS_TERMS.filter(k=>t.includes(' '+k+' ')||(k.length>3&&t.includes(k)));
+  $('flt').innerHTML=hits.length?`<b>PASS</b> · AWS terms found: ${hits.slice(0,4).join(', ')}`:`<b>BLOCK</b> · no AWS terms found`;
+  const typing=add('a','<span class="dots"><span></span><span></span><span></span></span>');
+  setTimeout(()=>{
+    typing.remove();
+    if(!hits.length){Bk++;$('sB').textContent=Bk;add('a no','🚫 Sorry, I only answer <b>AWS</b> questions for the AWS Club. Try "What is Lambda?" or "How do I make an S3 bucket private?"');return}
+    let best=null,sc=0;KB.forEach(e=>{const s=e[0].reduce((n,k)=>n+(t.includes(k)?k.length:0),0);if(s>sc){sc=s;best=e}});
+    A++;$('sA').textContent=A;
+    if(best)add('a',best[1]+(best[2]?`<span class="src">source: docs.aws.amazon.com/${best[2]}</span>`:''));
+    else add('a','That\'s an AWS question, but it isn\'t in my knowledge base yet. Check <b>docs.aws.amazon.com</b>, or ask an AWS Club lead.');
+  },650);
+}
+const S=[['How do I make an S3 bucket private?',0],['What is Lambda?',0],['Spot vs on-demand EC2?',0],['IAM role vs user?',0],['Who won the cricket match?',1],['Write me a poem about love',1]];
+S.forEach(([q,x])=>{const b=document.createElement('button');b.className='chip'+(x?' x':'');b.textContent=q;b.onclick=()=>ask(q);$('sugg').appendChild(b)});
+$('f').onsubmit=e=>{e.preventDefault();const v=$('in').value.trim();if(v){ask(v);$('in').value=''}};
+add('a','Hi! I\'m <b>Medzo</b>, the AWS Club assistant. Ask me anything about AWS. I\'ll politely skip questions that aren\'t about AWS.');
+</script>
+</body>
+</html>
